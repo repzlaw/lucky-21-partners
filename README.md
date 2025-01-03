@@ -1,4 +1,4 @@
-# Comprehensive Documentation: Migrating `advert-zendesk-batch.php` to Laravel
+# Migrating `advert-zendesk-batch.php` to Laravel
 
 This document outlines the migration process of the `advert-zendesk-batch.php` script to a Laravel-based application. The migration focuses on leveraging Laravel’s features like Eloquent ORM, dependency injection, and task scheduling to modernize and optimize the functionality.
 
