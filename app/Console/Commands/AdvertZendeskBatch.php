@@ -47,62 +47,38 @@ class AdvertZendeskBatch extends Command
             return;
         }
 
-        try {
-            $this->automationService->csatAutomationLowSpend();
-            $this->info('Low spend tickets processed successfully.');
-        } catch (\Exception $e) {
-            $this->error('Error processing low spend tickets: ' . $e->getMessage());
-            Log::error($e->getMessage());
-            \Sentry\captureException($e);
-        }
+        $tasks = [
+            'csatAutomationLowSpend' => 'Low spend tickets processed successfully.',
+            'csatAutomationOutOfBudget' => 'Out of budget tickets processed successfully.',
+            'refreshAdvTicketData' => 'Ticket data refreshed successfully.',
+            'csatAutomationHighAcos' => 'High ACOS tickets processed successfully.',
+            'updateInvToolWithAdvTickets' => 'Inventory tool updated with advertising tickets.',
+            'updateInvToolWithAdvtkWickets' => 'Inventory tool updated with advertising wickets.',
+        ];
 
-        try {
-            $this->automationService->csatAutomationOutOfBudget();
-            $this->info('High ACOS tickets processed successfully.');
-        } catch (\Exception $e) {
-            $this->error('Error processing high ACOS tickets: ' . $e->getMessage());
-            Log::error($e->getMessage());
-            \Sentry\captureException($e);
-        }
-
-        try {
-            $this->automationService->refreshAdvTicketData();
-            $this->info('Ticket data refreshed successfully.');
-        } catch (\Exception $e) {
-            $this->error('Error refreshing ticket data: ' . $e->getMessage());
-            Log::error($e->getMessage());
-            \Sentry\captureException($e);
-        }
-
-        try {
-            $this->automationService->csatAutomationHighAcos();
-            $this->info('High ACOS tickets processed successfully.');
-        } catch (\Exception $e) {
-            $this->error('Error processing high ACOS tickets: ' . $e->getMessage());
-            Log::error($e->getMessage());
-            \Sentry\captureException($e);
-        }
-
-        try {
-            $this->automationService->updateInvToolWithAdvTickets();
-            $this->info('Inventory tool updated with advertising tickets.');
-        } catch (\Exception $e) {
-            $this->error('Error updating inventory tool with advertising tickets: ' . $e->getMessage());
-            Log::error($e->getMessage());
-            \Sentry\captureException($e);
-        }
-
-        try {
-            $this->automationService->updateInvToolWithAdvtkWickets();
-            $this->info('Inventory tool updated with advertising wickets.');
-        } catch (\Exception $e) {
-            $this->error('Error updating inventory tool with advertising wickets: ' . $e->getMessage());
-            Log::error($e->getMessage());
-            \Sentry\captureException($e);
+        foreach ($tasks as $method => $successMessage) {
+            $this->executeTask($method, $successMessage);
         }
 
         $this->automationService->cleanupTickets();
-
         $this->info('Zendesk Batch Processing Completed');
+    }
+
+    /**
+     * Execute a task and handle exceptions.
+     *
+     * @param string $method
+     * @param string $successMessage
+     */
+    private function executeTask($method, $successMessage)
+    {
+        try {
+            $this->automationService->$method();
+            $this->info($successMessage);
+        } catch (\Exception $e) {
+            $this->error("Error processing task {$method}: " . $e->getMessage());
+            Log::error($e->getMessage());
+            \Sentry\captureException($e);
+        }
     }
 }
