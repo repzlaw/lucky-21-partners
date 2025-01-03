@@ -1,66 +1,114 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Comprehensive Documentation: Migrating `advert-zendesk-batch.php` to Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This document outlines the migration process of the `advert-zendesk-batch.php` script to a Laravel-based application. The migration focuses on leveraging Laravel’s features like Eloquent ORM, dependency injection, and task scheduling to modernize and optimize the functionality.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## **1. Overview**
+The `advert-zendesk-batch.php` script contains various functions to handle Zendesk tickets, inventory tool updates, and advertising ticket metrics. Migrating this to Laravel involves:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. Transforming procedural code into structured, reusable services and controllers.
+2. Replacing raw SQL queries with Eloquent ORM.
+3. Utilizing Laravel’s task scheduling for periodic execution.
+4. Implementing error handling and logging using Laravel’s built-in features.
+5. Enhancing code readability and maintainability.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## **2. Migration Process**
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### **2.1 Setting Up Laravel Environment**
+Ensure your Laravel environment is properly configured:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+1. **Install Laravel**:
+   ```bash
+   composer create-project laravel/laravel lucky-21-partners
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2. **Set Up Database**:
+   - Configure `.env` for database connection:
+     ```env
+     DB_CONNECTION=mysql
+     DB_HOST=127.0.0.1
+     DB_PORT=3306
+     DB_DATABASE=your_database
+     DB_USERNAME=your_username
+     DB_PASSWORD=your_password
+     ```
 
-## Laravel Sponsors
+3. **Install Required Packages**:
+   - Example: For Zendesk API integration:
+     ```bash
+     composer require huddledigital/zendesk-laravel
+     composer require sentry/sentry-laravel
+     ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### **2.2 Database Migration**
 
-### Premium Partners
+Create migration files for tables referenced in the script (`zendesk_tickets`, `zendesk_ticket_items`, `zendesk_ticket_tags`, `ab_inventory_tool`).
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+Example: Migration for `zendesk_tickets`
+```php
+php artisan make:migration create_zendesk_tickets_table
+```
 
-## Contributing
+Define the schema:
+```php
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+class CreateZendeskTicketsTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('zendesk_tickets', function (Blueprint $table) {
+            $table->id('ticketid');
+            $table->string('storeid')->nullable();
+            $table->string('subject');
+            $table->text('ticket_json');
+            $table->enum('status', ['open', 'solved', 'closed']);
+            $table->timestamps();
+        });
+    }
 
-## Code of Conduct
+    public function down()
+    {
+        Schema::dropIfExists('zendesk_tickets');
+    }
+}
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Run the migrations:
+```bash
+php artisan migrate
+```
 
-## Security Vulnerabilities
+### **2.3 Model Creation**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Create Eloquent models for each table.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### **2.4 Service Classes**
+
+Create service classes to encapsulate Zendesk-related logic.
+
+Example: `TicketAutomationService.php`
+
+### **2.5 Refactor Functions**
+
+1. **Eloquent for Queries**:
+   Replace raw SQL queries with Eloquent for better readability and maintainability.
+
+---
+
+### **2.6 Task Scheduling**
+
+Use Laravel’s `Task Scheduler` to automate script execution.
+
+1. **Create Artisan Command**:
+   ```bash
+   php artisan make:command AdvertZendeskBatch
+   ```
+---
